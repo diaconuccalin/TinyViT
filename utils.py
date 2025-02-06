@@ -50,7 +50,7 @@ def add_common_args(parser):
                         default=False, help='use wandb to record log')
 
     # distributed training
-    parser.add_argument("--local_rank", type=int,
+    parser.add_argument("--local-rank", type=int,
                         help='local rank for DistributedDataParallel')
 
 
