@@ -19,8 +19,6 @@ if __name__ == "__main__":
     the_set = set()
     for label in labels:
         the_set.add(int(label.strip().split(" ")[1]))
-    print(the_set)
-    print(len(the_set))
 
     # Read and prepare json for class names
     with open(args.classes_file, "r") as f:
