@@ -18,6 +18,8 @@ import torch.utils.checkpoint as checkpoint
 from timm.models.layers import DropPath as TimmDropPath, to_2tuple, trunc_normal_
 from timm.models.registry import register_model
 
+from models.NativeSparseAttention.NativeSparseAttention import SparseAttention
+
 try:
     # timm.__version__ >= "0.6"
     from timm.models._builder import build_model_with_cfg
@@ -348,6 +350,7 @@ class TinyViTBlock(nn.Module):
         drop_path=0.0,
         local_conv_size=3,
         activation=nn.GELU,
+        use_nsa=False,
     ):
         super().__init__()
         self.dim = dim
@@ -363,13 +366,25 @@ class TinyViTBlock(nn.Module):
         head_dim = dim // num_heads
 
         window_resolution = (window_size, window_size)
-        self.attn = Attention(
-            dim,
-            head_dim,
-            num_heads,
-            attn_ratio=1,
-            resolution=window_resolution,
-        )
+
+        if use_nsa:
+            self.attn = SparseAttention(
+                dim=dim,
+                dim_head=head_dim,
+                heads=num_heads,
+                sliding_window_size=512,
+                compress_block_size=32,
+                selection_block_size=64,
+                num_selected_blocks=16,
+            )
+        else:
+            self.attn = Attention(
+                dim=dim,
+                key_dim=head_dim,
+                num_heads=num_heads,
+                attn_ratio=1,
+                resolution=window_resolution,
+            )
 
         mlp_hidden_dim = int(dim * mlp_ratio)
         mlp_activation = activation
@@ -473,6 +488,7 @@ class BasicLayer(nn.Module):
         local_conv_size=3,
         activation=nn.GELU,
         out_dim=None,
+        use_nsa=False,
     ):
 
         super().__init__()
@@ -496,6 +512,7 @@ class BasicLayer(nn.Module):
                     ),
                     local_conv_size=local_conv_size,
                     activation=activation,
+                    use_nsa=use_nsa,
                 )
                 for i in range(depth)
             ]
@@ -540,6 +557,7 @@ class TinyViT(nn.Module):
         mbconv_expand_ratio=4.0,
         local_conv_size=3,
         layer_lr_decay=1.0,
+        use_nsa=False,
     ):
         super().__init__()
 
@@ -601,6 +619,7 @@ class TinyViT(nn.Module):
                     mlp_ratio=self.mlp_ratio,
                     drop=drop_rate,
                     local_conv_size=local_conv_size,
+                    use_nsa=use_nsa,
                     **kwargs,
                 )
             self.layers.append(layer)

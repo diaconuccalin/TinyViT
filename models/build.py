@@ -27,6 +27,7 @@ def build_model(config):
             mbconv_expand_ratio=M.MBCONV_EXPAND_RATIO,
             local_conv_size=M.LOCAL_CONV_SIZE,
             layer_lr_decay=config.TRAIN.LAYER_LR_DECAY,
+            use_nsa=config.USE_NSA,
         )
     elif model_type == "clip_vit_large14_224":
         from .clip import CLIP

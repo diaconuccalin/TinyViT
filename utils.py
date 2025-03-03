@@ -71,6 +71,12 @@ def add_common_args(parser):
         default=False,
         help="use wandb to record log",
     )
+    parser.add_argument(
+        "--use-nsa",
+        action="store_true",
+        default=False,
+        help="use native sparse attention in place of regular attention",
+    )
 
     # distributed training
     parser.add_argument(
