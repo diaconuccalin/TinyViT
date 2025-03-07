@@ -8,6 +8,7 @@
 # ---------------------------------------------------------------
 
 import copy
+
 import torch.distributed as dist
 
 
@@ -41,33 +42,33 @@ class LRSchedulerWrapper:
         self.update_lr()
 
     def step_frac(self, frac):
-        if hasattr(self.lr_scheduler, 'step_frac'):
+        if hasattr(self.lr_scheduler, "step_frac"):
             self.lr_scheduler.step_frac(frac)
             self.update_lr()
 
     def update_lr(self):
         param_groups = self.optimizer.param_groups
         for group in param_groups:
-            if 'lr_scale' not in group:
+            if "lr_scale" not in group:
                 continue
-            params = group['params']
+            params = group["params"]
             # update lr scale
             lr_scale = None
             for p in params:
-                if hasattr(p, 'lr_scale'):
+                if hasattr(p, "lr_scale"):
                     if lr_scale is None:
                         lr_scale = p.lr_scale
                     else:
                         assert lr_scale == p.lr_scale, (lr_scale, p.lr_scale)
-            if lr_scale != group['lr_scale']:
-                if is_main_process():
-                    print('=' * 30)
-                    print("params:", [e.param_name for e in params])
-                    print(
-                        f"change lr scale: {group['lr_scale']} to {lr_scale}")
-            group['lr_scale'] = lr_scale
+            # if lr_scale != group['lr_scale']:
+            #     if is_main_process():
+            #         print('=' * 30)
+            #         print("params:", [e.param_name for e in params])
+            #         print(
+            #             f"change lr scale: {group['lr_scale']} to {lr_scale}")
+            group["lr_scale"] = lr_scale
             if lr_scale is not None:
-                group['lr'] *= lr_scale
+                group["lr"] *= lr_scale
 
     def state_dict(self):
         return self.lr_scheduler.state_dict()
@@ -107,14 +108,14 @@ def divide_param_groups_by_lr_scale(param_groups):
     """
     new_groups = []
     for group in param_groups:
-        params = group.pop('params')
+        params = group.pop("params")
 
-        '''
+        """
         divide parameters to different groups by lr_scale
-        '''
+        """
         lr_scale_groups = dict()
         for p in params:
-            lr_scale = getattr(p, 'lr_scale', 1.0)
+            lr_scale = getattr(p, "lr_scale", 1.0)
 
             # create a list if not existed
             if lr_scale not in lr_scale_groups:
@@ -126,8 +127,8 @@ def divide_param_groups_by_lr_scale(param_groups):
         for lr_scale, params in lr_scale_groups.items():
             # copy other parameter information like `weight_decay`
             new_group = copy.copy(group)
-            new_group['params'] = params
-            new_group['lr_scale'] = lr_scale
+            new_group["params"] = params
+            new_group["lr_scale"] = lr_scale
             new_groups.append(new_group)
     return new_groups
 
@@ -135,9 +136,9 @@ def divide_param_groups_by_lr_scale(param_groups):
 def set_weight_decay(model):
     skip_list = {}
     skip_keywords = {}
-    if hasattr(model, 'no_weight_decay'):
+    if hasattr(model, "no_weight_decay"):
         skip_list = model.no_weight_decay()
-    if hasattr(model, 'no_weight_decay_keywords'):
+    if hasattr(model, "no_weight_decay_keywords"):
         skip_keywords = model.no_weight_decay_keywords()
 
     has_decay = []
@@ -145,13 +146,16 @@ def set_weight_decay(model):
     for name, param in model.named_parameters():
         if not param.requires_grad:
             continue  # frozen weights
-        if len(param.shape) == 1 or name.endswith(".bias") or (name in skip_list) or \
-                check_keywords_in_name(name, skip_keywords):
+        if (
+            len(param.shape) == 1
+            or name.endswith(".bias")
+            or (name in skip_list)
+            or check_keywords_in_name(name, skip_keywords)
+        ):
             no_decay.append(param)
         else:
             has_decay.append(param)
-    return [{'params': has_decay},
-            {'params': no_decay, 'weight_decay': 0.}]
+    return [{"params": has_decay}, {"params": no_decay, "weight_decay": 0.0}]
 
 
 def check_keywords_in_name(name, keywords=()):

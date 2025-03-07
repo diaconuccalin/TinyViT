@@ -41,9 +41,9 @@ def build_model(config):
             "num_classes": config.MODEL.NUM_CLASSES,
         }
         model = CLIP(**kwargs)
-    elif model_type == "vit_base_patch16_224":
+    elif model_type.startswith("vit_"):
         model = create_model(
-            model_name="vit_base_patch16_224",
+            model_name=model_type,
             pretrained=False,
             num_classes=config.MODEL.NUM_CLASSES,
             drop_path_rate=config.MODEL.DROP_PATH_RATE,

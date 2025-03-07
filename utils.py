@@ -126,6 +126,20 @@ def load_checkpoint(config, model, optimizer, lr_scheduler, loss_scaler, logger)
                     params[name] = v
 
     msg = model.load_state_dict(params, strict=False)
+
+    model.blocks = torch.nn.Sequential(
+        model.blocks[0],
+        model.blocks[1],
+        model.blocks[2],
+        model.blocks[3],
+        model.blocks[4],
+        model.blocks[5],
+        model.blocks[6],
+        model.blocks[23],
+    )
+    print(model)
+    input()
+
     logger.info(msg)
     max_accuracy = 0.0
     if not config.EVAL_MODE:
@@ -157,7 +171,11 @@ def load_pretrained(config, model, logger):
         f"==============> Loading weight {config.MODEL.PRETRAINED} for fine-tuning......"
     )
     checkpoint = torch.load(config.MODEL.PRETRAINED, map_location="cpu")
-    state_dict = checkpoint["model"]
+
+    if "model" not in checkpoint.keys():
+        state_dict = checkpoint
+    else:
+        state_dict = checkpoint["model"]
 
     # delete relative_position_index since we always re-init it
     relative_position_index_keys = [
@@ -295,6 +313,19 @@ def load_pretrained(config, model, logger):
             )
 
     msg = model.load_state_dict(state_dict, strict=False)
+
+    model.blocks = torch.nn.Sequential(
+        model.blocks[0],
+        model.blocks[1],
+        model.blocks[2],
+        model.blocks[3],
+        model.blocks[4],
+        model.blocks[5],
+        model.blocks[6],
+    )
+    print(model)
+    input()
+
     logger.warning(msg)
 
     logger.info(f"=> loaded successfully '{config.MODEL.PRETRAINED}'")

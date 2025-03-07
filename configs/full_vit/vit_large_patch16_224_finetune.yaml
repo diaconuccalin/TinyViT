@@ -1,0 +1,20 @@
+MODEL:
+  TYPE: vit_large_patch16_224
+  DROP_PATH_RATE: 0.0
+
+TRAIN:
+  EPOCHS: 30
+  WARMUP_EPOCHS: 5
+  BASE_LR: 2.5e-4
+  WEIGHT_DECAY: 1e-8
+  MIN_LR: 1e-5
+  LAYER_LR_DECAY: 0.8
+  EVAL_BN_WHEN_TRAINING: True
+
+DATA:
+  MEAN_AND_STD_TYPE: clip
+  DATASET: imagenet
+
+AUG:
+  MIXUP: 0.0
+  CUTMIX: 0.0
